@@ -1,0 +1,160 @@
+# Reason-string mapping layer v1 (BUILD_PLAN Stage 1).
+#
+# Public injury designations are messy: "ankle", "left ankle soreness",
+# "lower leg", "Achilles tendinopathy", "calf tightness", "placed on IL",
+# "rest (DNP)". This dictionary normalizes them into modeled categories.
+#
+# ITERATIVE BY DESIGN: every new raw string variant you encounter that doesn't
+# match -> add a pattern here and log it in DECISIONS.md. The classifier reports
+# its ambiguous/unmatched rate so you know how much remains.
+#
+# Matching rules (see reason_mapper.py):
+#   - Patterns are lowercased substring/regex checks against the raw notes.
+#   - Categories are tried in PRIORITY ORDER (top to bottom). First match wins.
+#     Order matters: specific severe tails (achilles) before generic (lower_limb).
+#   - load_management patterns set time_loss=False (these are NOT injuries).
+#   - A row matching nothing injury-like is flagged ambiguous=True.
+
+# --- Non-injury / load-management: time_loss = False ---------------------------
+# These must be filtered OUT of the injury labels. Public logs mix them in.
+load_management:
+  patterns:
+    - "rest"
+    - "dnp-rest"
+    - "dnp - rest"
+    - "load management"
+    - "load-management"
+    - "coach's decision"
+    - "coachs decision"
+    - "personal reasons"
+    - "personal matter"
+    - "not with team"
+    - "g league"
+    - "g-league"
+    - "two-way"
+    - "suspension"
+    - "suspended"
+    - "returned to lineup"     # 'acquired' side noise
+    - "activated"
+
+# --- Injury categories: time_loss = True --------------------------------------
+# Severe tail FIRST so "achilles" never gets swallowed by generic lower-limb.
+categories:
+  - name: achilles            # spotlighted severe tail (NOT a standalone target)
+    severe_tail: true
+    patterns:
+      - "achilles"
+      - "achille"             # common misspelling seen in logs
+
+  - name: knee_ligament
+    patterns:
+      - "acl"
+      - "mcl"
+      - "pcl"
+      - "lcl"
+      - "meniscus"
+      - "meniscal"
+      - "knee surgery"
+      - "torn .*knee"
+      - "knee ligament"
+
+  - name: lower_limb_soft_tissue
+    patterns:
+      - "ankle"
+      - "calf"
+      - "hamstring"
+      - "patellar"
+      - "patella"
+      - "quad"                # quadriceps strains
+      - "groin"
+      - "adductor"
+      - "hip flexor"
+      - "shin"
+      - "lower leg"
+      - "foot"
+      - "plantar"
+      - "heel"
+      - "toe"
+      - "tibia"
+      - "fibula"
+      - "soleus"
+
+  - name: knee_other          # knee not otherwise specified as ligament
+    patterns:
+      - "knee"
+      - "patellar tendin"
+
+  - name: back
+    patterns:
+      - "back"
+      - "lumbar"
+      - "spine"
+      - "spinal"
+      - "disc"
+      - "sciatic"
+
+  - name: hand_finger
+    patterns:
+      - "hand"
+      - "finger"
+      - "thumb"
+      - "wrist"
+      - "knuckle"
+
+  - name: concussion
+    patterns:
+      - "concussion"
+      - "head injury"
+      - "facial"
+      - "nose"
+      - "orbital"
+      - "eye"
+
+  - name: illness
+    patterns:
+      - "illness"
+      - "ill "
+      - "flu"
+      - "virus"
+      - "covid"
+      - "health and safety"
+      - "gastro"
+      - "migraine"
+      - "fever"
+      - "respiratory"
+
+  - name: upper_body_other    # shoulder/elbow/etc — modeled but not deep-dived
+    patterns:
+      - "shoulder"
+      - "elbow"
+      - "bicep"
+      - "tricep"
+      - "pectoral"
+      - "rib"
+      - "oblique"
+      - "abdominal"
+      - "neck"
+      - "collarbone"
+      - "clavicle"
+
+  - name: general_soreness    # vague but injury-flavored (time-loss-ish)
+    patterns:
+      - "sore"
+      - "soreness"
+      - "tightness"
+      - "strain"
+      - "sprain"
+      - "bruise"
+      - "contusion"
+      - "spasm"
+      - "fracture"
+      - "surgery"
+      - "injury"
+      - "injured"
+      - "placed on il"
+      - "placed on the il"
+      - "inactive list"
+      - "out indefinitely"
+
+# Anything that matches no category above and isn't load_management
+# is flagged ambiguous=True (counted in the Gate-1 tally, set aside honestly).

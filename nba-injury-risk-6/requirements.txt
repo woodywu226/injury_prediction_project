@@ -1,0 +1,20 @@
+# Stage 0/1 only. Modeling libs (scikit-learn, pydts, shap, evidently...) added
+# at their own stages per BUILD_PLAN, to keep the env minimal until needed.
+requests>=2.31,<3
+pandas>=2.1,<3
+pyarrow>=15,<19      # Parquet writer for the caching pattern
+python-dateutil>=2.8
+pyyaml>=6.0          # mapping-layer config lives in YAML for easy iteration
+pytest>=8.0          # Gate checks are codified as tests
+# --- Stage 4 (modeling) ---
+scikit-learn>=1.4,<2 # discrete-time hazard: logistic + HistGradientBoosting
+# --- Stage 6 (depth) ---
+pydts>=0.1,<1        # OPTIONAL competing-risks cross-check; sklearn is the anchor
+# --- Stage 7 (prescriptive) ---
+shap>=0.44,<1        # SHAP interpretation; falls back to coefficients if absent
+# --- Stage 8 (monitoring) ---
+# PSI/KS implemented natively (no hard dep). Optional cross-checks:
+# evidently>=0.4   # optional drift-report cross-check; native PSI/KS is primary
+# nannyml>=0.10    # optional late-label estimation; native expected-Brier is primary
+# --- Stage 10 (optional live layer) ---
+# streamlit>=1.30   # only needed for the dashboard: streamlit run src/nba_injury/dashboard.py
